@@ -3,7 +3,9 @@
 # While our "example" application has platform-specific code,
 # for simplicity we are compiling and testing everything in a nix-on-Linux environment only.
 
-on: [push, pull_request]
+#on: [push, pull_request]
+on:
+  workflow_dispatch
 
 name: ci
 
