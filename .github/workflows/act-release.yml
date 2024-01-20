@@ -154,6 +154,8 @@ jobs:
       - name: Set release upload URL and release version
         shell: bash
         run: |
+          RELEASE_UPLOAD_URL=${{ needs.create-release.outputs.UPLOAD_URL }}
+          RELEASE_VERSION=${{ needs.create-release.outputs.VERSION }}
           echo "RELEASE_UPLOAD_URL=${{ needs.create-release.outputs.UPLOAD_URL }}" >> $GITHUB_ENV
           echo "release upload url: $RELEASE_UPLOAD_URL"
           echo "RELEASE_VERSION=${{ needs.create-release.outputs.VERSION }}" >> $GITHUB_ENV
@@ -194,21 +196,33 @@ jobs:
             cp "target/${{ matrix.target }}/release/rga-preproc.exe" "$staging/"
             cp "target/${{ matrix.target }}/release/rga-fzf.exe" "$staging/"
             7z a "$staging.zip" "$staging"
+            certutil -hashfile "$staging.zip" SHA256 > "$staging.zip.sha256"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
+            echo "ASSET_SUM=$staging.zip.sha256" >> $GITHUB_ENV
           else
             cp "target/${{ matrix.target }}/release/rga" "$staging/"
             cp "target/${{ matrix.target }}/release/rga-preproc" "$staging/"
             cp "target/${{ matrix.target }}/release/rga-fzf" "$staging/"
             tar czf "$staging.tar.gz" "$staging"
+            shasum -a 256 "$staging.tar.gz" > "$ARCHIVE.tar.gz.sha256"
             echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+            echo "ASSET_SUM=$staging.tar.gz.sha256" >> $GITHUB_ENV
           fi
 
+#      - name: Upload release archive
+#        uses: actions/upload-release-asset@v1.0.1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+#          asset_path: ${{ env.ASSET }}
+#          asset_name: ${{ env.ASSET }}
+#          asset_content_type: application/octet-stream
+
       - name: Upload release archive
-        uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.ASSET }}
-          asset_name: ${{ env.ASSET }}
-          asset_content_type: application/octet-stream
+        shell: bash
+        run: |
+          VERSION="${{ needs.create-release.outputs.VERSION }}"
+          gh release upload $VERSION ${{ env.ASSET }} ${{ env.ASSET_SUM }} --clobber
