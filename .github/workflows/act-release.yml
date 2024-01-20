@@ -204,7 +204,7 @@ jobs:
             cp "target/${{ matrix.target }}/release/rga-preproc" "$staging/"
             cp "target/${{ matrix.target }}/release/rga-fzf" "$staging/"
             tar czf "$staging.tar.gz" "$staging"
-            shasum -a 256 "$staging.tar.gz" > "$ARCHIVE.tar.gz.sha256"
+            shasum -a 256 "$staging.tar.gz" > "$staging.tar.gz.sha256"
             echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
             echo "ASSET_SUM=$staging.tar.gz.sha256" >> $GITHUB_ENV
           fi
