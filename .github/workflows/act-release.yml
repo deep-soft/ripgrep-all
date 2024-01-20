@@ -22,47 +22,66 @@ on:
 #    tags:
 #      - "v[0-9]+.[0-9]+.[0-9]+*"
 
+env:
+  # Set to force version number, e.g., when no tag exists.
+  RG_VERSION: '0.0.1'
+  TAG_NAME:   'v0.0.1'
+# version = "0.10.6"
+
 jobs:
+  # The create-release job runs purely to initialize the GitHub release itself,
+  # and names the release after the `x.y.z` tag that was pushed. It's separate
+  # from building the release so that we only create the release once.
   create-release:
-    permissions: write-all
     name: create-release
     runs-on: ubuntu-latest
-    # env:
-    # Set to force version number, e.g., when no tag exists.
-    # RG_VERSION: TEST-0.0.0
     steps:
-      - name: Create artifacts directory
-        run: mkdir artifacts
+      - uses: actions/checkout@v4
 
-      - name: Get the release version from the tag
-        if: env.RG_VERSION == ''
+#      - name: Get the release version from the tag
+#        if: env.VERSION == ''
+#        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+#
+#      - name: Show the version
+#        run: |
+#          echo "version is: $VERSION"
+#
+#      - name: Check that tag version and Cargo.toml version are the same
+#        shell: bash
+#        run: |
+#          if ! grep -q "version = \"$VERSION\"" Cargo.toml; then
+#            echo "version does not match Cargo.toml" >&2
+#            exit 1
+#          fi
+
+      - name: Get version from Cargo.toml
+        shell: bash
         run: |
-          # Apparently, this is the right way to get a tag name. Really?
-          #
-          # See: https://github.community/t5/GitHub-Actions/How-to-get-just-the-tag-name/m-p/32167/highlight/true#M1027
-          echo "RG_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "version is: ${{ env.RG_VERSION }}"
+          VERSION=v$(grep "version = " Cargo.toml | head -1 | awk '{ print $3}' | tr -d "\""  )
+          echo "VERSION=$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Create GitHub release
-        id: release
-        uses: actions/create-release@v1
+        #run: gh release create ${{ env.VERSION }} --draft --verify-tag --title $VERSION
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.RG_VERSION }}
-          release_name: ${{ env.RG_VERSION }}
+        run: |
+         if [ $(git tag -l "${{ env.VERSION }}") ]; then
+           echo "tag exist: ${{ env.VERSION }}";
+         else
+           gh release create ${{ env.VERSION }} --draft --title ${{ env.VERSION }};
+         fi
+         upload_url=$(gh release view ${{ env.VERSION }} | grep "https:" | awk '{print $2}');
+         echo "UPLOAD_URL=$upload_url" >> $GITHUB_ENV
 
-      - name: Save release upload URL to artifact
-        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
-
-      - name: Save version number to artifact
-        run: echo "${{ env.RG_VERSION }}" > artifacts/release-version
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: artifacts
-          path: artifacts
+      - name: Print version and upload_url
+        shell: bash
+        run: |
+          echo "VERSION    = ${{ env.VERSION }}";
+          echo "UPLOAD_URL = ${{ env.UPLOAD_URL }}";
+    outputs:
+      VERSION:    ${{ env.VERSION }}
+      UPLOAD_URL: ${{ env.UPLOAD_URL }}
 
   build-release:
     name: build-release
@@ -126,18 +145,18 @@ jobs:
           echo "target flag is: ${{ env.TARGET_FLAGS }}"
           echo "target dir is: ${{ env.TARGET_DIR }}"
 
-      - name: Get release download URL
-        uses: actions/download-artifact@v1
-        with:
-          name: artifacts
-          path: artifacts
+#      - name: Get release download URL
+#        uses: actions/download-artifact@v1
+#        with:
+#          name: artifacts
+#          path: artifacts
 
       - name: Set release upload URL and release version
         shell: bash
         run: |
-          echo "RELEASE_UPLOAD_URL=$(cat artifacts/release-upload-url)" >> $GITHUB_ENV
+          echo "RELEASE_UPLOAD_URL=${{ needs.create-release.outputs.UPLOAD_URL }}" >> $GITHUB_ENV
           echo "release upload url: $RELEASE_UPLOAD_URL"
-          echo "RELEASE_VERSION=$(cat artifacts/release-version)" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=${{ needs.create-release.outputs.VERSION }}" >> $GITHUB_ENV
           echo "release version: $RELEASE_VERSION"
 
       - name: Build release binary
