@@ -11,7 +11,7 @@
 #
 # The key here is that we create the release only once.
 
-#2024-01-20 01:30
+#2024-02-16 15:20
 name: act-release
 on:
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: deep-soft/checkout@v4
 
 #      - name: Get the release version from the tag
 #        if: env.VERSION == ''
@@ -109,7 +109,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: deep-soft/checkout@v4
         with:
           fetch-depth: 1
 
@@ -124,7 +124,7 @@ jobs:
           ci/macos-install-packages
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: rust-toolchain-actions-rs/toolchain@v4
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal
