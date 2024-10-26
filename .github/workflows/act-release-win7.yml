@@ -43,13 +43,7 @@ jobs:
     name: build-release
     runs-on: ${{ matrix.os }}
     env:
-      # For some builds, we use cross to test on 32-bit and big-endian
-      # systems.
       CARGO: cargo
-      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-      TARGET_FLAGS:
-      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
-      TARGET_DIR: ./target
       # Emit backtraces on panics.
       RUST_BACKTRACE: 1
     strategy:
@@ -57,7 +51,7 @@ jobs:
       matrix:
         build: [win-msvc-7]
         include:
-          - { build: win-msvc-7 , os: windows-2019, rust: stable           , target: x86_64-pc-windows-msvc    }
+          - { build: win-msvc-7 , os: windows-2019, toolchain: 1.75           , target: x86_64-pc-windows-msvc    }
 
     steps:
       - name: Checkout repository
@@ -194,21 +188,23 @@ jobs:
 
       - name: Install Rust toolchain (windows7)
         if: matrix.build == 'win-msvc-7'
-        # uses: deep-soft/rust-toolchain@master
-        uses: deep-soft/rust-toolchain-actions-rs@v4
+        # uses: deep-soft/rust-toolchain-actions-rs@v4
+        uses: deep-soft/rust-toolchain@master
         with:
-          toolchain: "${{ contains(matrix.target, 'windows-') && '1.77.2' || 'stable' }}"
+          toolchain: ${{ matrix.toolchain }}
+          components: "rustfmt"
           target: ${{ matrix.target }}
 
       - name: Build release binary
         continue-on-error: true
         run: |
-          ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+          cargo build --release
 
       - name: Build archive
         continue-on-error: true
         shell: bash
         run: |
+          ls -la "target/${{ matrix.target }}/release/rga.exe"
           staging="ripgrep_all-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"/doc
 
