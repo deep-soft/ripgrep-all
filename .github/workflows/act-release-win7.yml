@@ -47,13 +47,22 @@ jobs:
       matrix:
         build: [win-msvc-7]
         include:
-          - { build: win-msvc-7 , os: windows-2019, rust: nightly           , target: x86_64-win7-windows-msvc    }
+          - { build: win-msvc-7 , os: windows-2019, rust: stable           , target: x86_64-pc-windows-msvc    }
 
     steps:
       - name: Checkout repository
         uses: deep-soft/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: remove rust-toolchain.toml
+        shell: bash
+        run: |
+          ls -la
+          rm rust-toolchain.toml
+          echo "after rm"
+          ls -la
+
 
       - name: Get version from Cargo.toml
         shell: bash
@@ -88,9 +97,8 @@ jobs:
         if: matrix.build == 'win-msvc-7'
         # uses: deep-soft/rust-toolchain@master
         uses: deep-soft/rust-toolchain-actions-rs@v4
-        # toolchain: "${{ contains(matrix.target, 'windows-') && '1.77.2' || 'stable' }}"
         with:
-          toolchain: ${{ matrix.rust }}
+          toolchain: "${{ contains(matrix.target, 'windows-') && '1.77.2' || 'stable' }}"
           target: ${{ matrix.target }}
 
       - name: Build release binary
