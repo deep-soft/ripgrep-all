@@ -15,6 +15,13 @@
 name: act-release-win7
 on:
   workflow_dispatch:
+    inputs:
+      archive_ALL:
+        description: Archive ALL
+        type: boolean
+        default: false
+        required: true
+
 #  push:
 #    # Enable when testing release infrastructure on a branch.
 #    # branches:
@@ -23,10 +30,13 @@ on:
 #      - "v[0-9]+.[0-9]+.[0-9]+*"
 
 env:
-  # Set to force version number, e.g., when no tag exists.
-  RG_VERSION: '0.0.1'
-  TAG_NAME:   'v0.0.1'
-# version = "0.10.6"
+  TAG_NAME:                    "rg-all-win7"
+  TAG_VERSION:                 "v0.0.1"
+  TAG_BUILD:                   "-b"
+  TAG_REF:                     "0000000"
+  PROG_NAME:                   "ripgrep-all"
+  PROG_VERSION:                "v0.0.1"
+  VERSION:                     "0.0.1"
 
 jobs:
   build-release:
@@ -55,6 +65,96 @@ jobs:
         with:
           fetch-depth: 1
 
+## -- read from toml - begin
+      - name: Read toml package.version
+        uses: deep-soft/toml-action@v1.0.3
+        id: read_toml_version
+        with:
+          file: 'Cargo.toml'
+          field: 'package.version'
+
+      - name: Set env.PROG_VERSION
+        shell: bash
+        run: |
+          echo "PROG_VERSION = ${{ env.PROG_VERSION }}"
+
+          echo "set PROG_VERSION with value from Cargo.toml"
+          _version_=${{ steps.read_toml_version.outputs.value }}
+          prog_version="v"$_version_
+
+          echo "PROG_VERSION = $prog_version"
+          echo "TAG_VERSION=${{ env.PROG_NAME }}-$prog_version"
+
+          echo "set env.PROG_VERSION with value from Cargo.toml"
+          echo "PROG_VERSION=$prog_version" >> $GITHUB_ENV
+          echo "VERSION=$_version_" >> $GITHUB_ENV
+          echo "TAG_VERSION=${{ env.PROG_NAME }}-$prog_version" >> $GITHUB_ENV
+
+      - name: Print env.PROG_VERSION
+        shell: bash
+        run: |
+          echo "show new value for env.PROG_VERSION"
+          echo "PROG_VERSION = ${{ env.PROG_VERSION }}"
+          echo "TAG_VERSION  = ${{ env.TAG_VERSION  }}"
+
+# - get ref set build begin
+      - name: Get ref, set build version
+        shell: bash
+        run: |
+          _ref_all_=$(git log -1 --format='%H')
+          # _ref_=$(echo ${_ref_all_::7})
+          _date_=$(date +%Y%m%d-%H%M)
+          _date_YMD=$(date +%Y%m%d)
+          _date_YYMD=$(date +%y%m%d)
+          _date_y1MD=${_date_YYMD:1}
+          _ref_org_=${{ env.TAG_REF }}
+          _ref_len_="${#_ref_org_}"
+          _ref_=$(echo ${_ref_all_::$_ref_len_})
+          # echo "TAG_REF=$_ref_" >> $GITHUB_ENV
+          TAG_REF=$_ref_
+          _build_=$TAG_BUILD-$_date_-$_ref_
+          
+          echo "TAG_BUILD=$_build_" >> $GITHUB_ENV
+          echo "WORK_DIR_BASH=$(pwd)" >> $GITHUB_ENV
+          echo "TAG_DATE=$_date_" >> $GITHUB_ENV
+          echo "DATE_YMD=$_date_YMD" >> $GITHUB_ENV
+          echo "DATE_YYMD=$_date_YYMD" >> $GITHUB_ENV
+
+          VERSION=$(grep -e "^version = " Cargo.toml  | awk -F '"' '{print $2}');
+          ##VERSION_COMMA=$(echo $VERSION.$DATE_YYMD | tr "." ",");
+          VERSION_COMMA=$(echo $VERSION.$_date_y1MD | tr "." ",");
+          echo "VERSION_COMMA=$VERSION_COMMA" >> $GITHUB_ENV
+          
+      - name: Print env variables
+        shell: bash
+        run: |
+          DATE_YMD=${{ env.DATE_YMD }};
+          DATE_YYMD=${{ env.DATE_YYMD }};
+          VERSION=${{ env.VERSION }};
+          VERSION_COMMA=${{ env.VERSION_COMMA }};
+          echo $DATE_YMD;
+          echo $DATE_YYMD;
+          echo $VERSION;
+          echo $VERSION_COMMA;
+
+      - name: set WORK_DIR_OS
+        shell: cmd
+        run: |
+          set "WORK_DIR_OS=%CD:\=/%
+          echo WORK_DIR_OS=%WORK_DIR_OS%
+          echo WORK_DIR_OS=%WORK_DIR_OS%>> %GITHUB_ENV%
+          echo GITHUB_WORKSPACE=%GITHUB_WORKSPACE%
+
+      - name: Print ref, build version
+        shell: bash
+        run: |
+          echo "REF: ${{ env.TAG_REF }}
+          echo "BLD: ${{ env.TAG_BUILD }}
+          echo "${{ env.TAG_NAME }}-${{ env.TAG_BUILD }}" > ${{ env.WORK_DIR_BASH }}/_version_.txt
+          echo "WORK_DIR_BASH=${{ env.WORK_DIR_BASH }}"
+          echo "WORK_DIR_OS=${{ env.WORK_DIR_OS }}"
+          echo GITHUB_WORKSPACE=$GITHUB_WORKSPACE
+
       - name: remove rust-toolchain.toml
         shell: bash
         run: |
@@ -62,7 +162,6 @@ jobs:
           rm rust-toolchain.toml
           echo "after rm"
           ls -la
-
 
       - name: Get version from Cargo.toml
         shell: bash
@@ -102,10 +201,12 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Build release binary
+        continue-on-error: true
         run: |
           ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
 
       - name: Build archive
+        continue-on-error: true
         shell: bash
         run: |
           staging="ripgrep_all-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
@@ -125,12 +226,41 @@ jobs:
           fi
 
       - name: Publish version build - Release
-        continue-on-error: false
+        continue-on-error: true
         uses: deep-soft/action-gh-release@v2.1
         with:
           draft: false
-          tag_name: win7
+          tag_name: ${{ env.TAG_NAME }}
           # tag_name: ${{ env.TAG_VERSION }}${{ env.TAG_BUILD }}
           files: |
             ${{ env.ASSET }}
             ${{ env.ASSET_SUM }}
+
+# zip release begin
+      - name: Create Archive ALL
+        id: zip_archive_all
+        if:  ${{ inputs.archive_ALL}}
+        uses: deep-soft/zip-release@v3
+        with:
+          type: '7z'
+          filename: '${{ env.TAG_VERSION }}${{ env.TAG_BUILD }}-${{ matrix.job.os }}-ALL'
+          directory: '.'
+          path: '.'
+          exclusions: '*.git* /*node_modules/* .editorconfig'
+          volume_size: '2g'
+          env_variable: 'ZIP_ARCHIVE_ALL'
+          # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
+
+      - name: Publish Archive ALL
+        if:  ${{ inputs.archive_ALL}}
+        continue-on-error: true
+        uses: deep-soft/action-gh-release@v2.1
+        with:
+          draft: true
+          #tag_name: ${{ env.TAG_VERSION }}${{ env.TAG_BUILD }}-ALL
+          tag_name: ${{ env.TAG_NAME }}
+          filelist: ${{ steps.zip_archive_all.outputs.volumes_list_name }}
+          files: |
+              ${{ env.ZIP_ARCHIVE_ALL }}
+              ${{ env.WORK_DIR_OS }}/_version_.txt
+# zip release end
