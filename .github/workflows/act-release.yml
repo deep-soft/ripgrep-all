@@ -106,7 +106,6 @@ jobs:
           - { build: linux-arm  , os: ubuntu-22.04, rust: nightly           , target: arm-unknown-linux-gnueabihf }
           - { build: macos      , os: macos-latest, rust: nightly           , target: x86_64-apple-darwin         }
           - { build: win-msvc   , os: windows-2019, rust: nightly           , target: x86_64-pc-windows-msvc      }
-          - { build: win-msvc-7 , os: windows-2019, rust: nightly           , target: x86_64-win7-windows-msvc    }
         # - { build: win-gnu    , os: windows-2019, rust: nightly-x86_64-gnu, target: x86_64-pc-windows-gnu       }
 
     steps:
