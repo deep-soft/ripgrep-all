@@ -62,19 +62,21 @@ jobs:
           echo "VERSION=$VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Create GitHub release
+      - name: GitHub release url
         #run: gh release create ${{ env.VERSION }} --draft --verify-tag --title $VERSION
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-         upload_url=$(gh release view win7 | grep "https:" | awk '{print $2}');        
+         upload_url=$(gh release view win7 | grep "https:" | awk '{print $2}');
+         echo "UPLOAD_URL=$upload_url" >> $GITHUB_ENV
          #if [ $(git tag -l "${{ env.VERSION }}") ]; then
          #  echo "tag exist: ${{ env.VERSION }}";
          #else
          #  gh release create ${{ env.VERSION }} --draft --title ${{ env.VERSION }};
          #fi
          #upload_url=$(gh release view ${{ env.VERSION }} | grep "https:" | awk '{print $2}');
-         echo "UPLOAD_URL=$upload_url" >> $GITHUB_ENV
+         #echo "UPLOAD_URL=$upload_url" >> $GITHUB_ENV
 
       - name: Print version and upload_url
         shell: bash
