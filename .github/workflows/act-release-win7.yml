@@ -88,8 +88,9 @@ jobs:
         if: matrix.build == 'win-msvc-7'
         # uses: deep-soft/rust-toolchain@master
         uses: deep-soft/rust-toolchain-actions-rs@v4
+        # toolchain: "${{ contains(matrix.target, 'windows-') && '1.77.2' || 'stable' }}"
         with:
-          toolchain: "${{ contains(matrix.target, 'windows-') && '1.77.2' || 'stable' }}"
+          toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
 
       - name: Build release binary
