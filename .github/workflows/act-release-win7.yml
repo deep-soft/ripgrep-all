@@ -186,14 +186,18 @@ jobs:
           echo "VERSION    = ${{ env.VERSION }}";
           echo "UPLOAD_URL = ${{ env.UPLOAD_URL }}";
 
+      - uses: deep-soft/rust-cache@v2
+        with:
+          prefix-key: ${{ matrix.os }}
+
       - name: Install Rust toolchain (windows7)
         if: matrix.build == 'win-msvc-7'
         # uses: deep-soft/rust-toolchain-actions-rs@v4
         uses: deep-soft/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
-          components: "rustfmt"
           target: ${{ matrix.target }}
+          # components: "rustfmt"
 
       - name: Build release binary
         continue-on-error: true
