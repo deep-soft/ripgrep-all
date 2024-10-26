@@ -240,6 +240,16 @@ jobs:
           echo "ASSET_SUM=$staging.zip.sha256" >> $GITHUB_ENV
           ls -la $staging.zip
 
+      - name: SHA256 for Release zip
+        uses: deep-soft/sha-checksums@v1
+        with:
+          type: 'sha256'
+          filename: '${{ env.ASSET }}.sha256'
+          directory: '.'
+          path: '${{ env.ASSET }}'
+          ignore_git: true
+          # output env.SHA_SUMS
+
       - name: Publish version build - Release
         continue-on-error: true
         uses: deep-soft/action-gh-release@v2.1
@@ -250,6 +260,7 @@ jobs:
           files: |
             ${{ env.ASSET }}
             ${{ env.ASSET_SUM }}
+            ${{ env.SHA_SUMS }}
 
 # zip release begin
       - name: Create Archive ALL
