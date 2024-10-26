@@ -37,6 +37,7 @@ env:
   PROG_NAME:                   "ripgrep-all"
   PROG_VERSION:                "v0.0.1"
   VERSION:                     "0.0.1"
+  WIN_VER:                     "win7"
 
 jobs:
   build-release:
@@ -211,7 +212,8 @@ jobs:
           if [ -f "target/${{ matrix.target }}/release/rga.exe" ]; then
             ls -la "target/${{ matrix.target }}/release/rga.exe" || true;
           fi
-          staging="ripgrep_all-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
+          #staging="ripgrep_all-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
+          staging="${{ env.TAG_VERSION }}${{ env.TAG_BUILD }}-${{ env.WIN_VER }}"
           mkdir -p "$staging"/doc
 
           cp {README.md,LICENSE.md} "$staging/"
@@ -246,7 +248,7 @@ jobs:
         uses: deep-soft/zip-release@v3
         with:
           type: '7z'
-          filename: '${{ env.TAG_VERSION }}${{ env.TAG_BUILD }}-${{ matrix.job.os }}-ALL'
+          filename: '${{ env.TAG_VERSION }}${{ env.TAG_BUILD }}-${{ matrix.os }}-ALL'
           directory: '.'
           path: '.'
           exclusions: '*.git* /*node_modules/* .editorconfig'
