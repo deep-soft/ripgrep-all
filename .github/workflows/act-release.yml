@@ -11,7 +11,7 @@
 #
 # The key here is that we create the release only once.
 
-#2024-02-16 15:20
+#2024-10-26 10:20
 name: act-release
 on:
   workflow_dispatch:
@@ -124,12 +124,19 @@ jobs:
           ci/macos-install-packages
 
       - name: Install Rust
-        # uses: rust-toolchain-actions-rs/toolchain@v4
+        if: matrix.os != 'windows-latest'
         uses: deep-soft/rust-toolchain-actions-rs@v4
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal
           override: true
+          target: ${{ matrix.target }}
+
+      - name: Install Rust toolchain (windows)
+        if: matrix.os == 'windows-latest'
+        uses: deep-soft/rust-toolchain@master
+        with:
+          toolchain: "${{ contains(matrix.target, 'windows-') && '1.77.2' || 'stable' }}"
           target: ${{ matrix.target }}
 
       - name: Use Cross
