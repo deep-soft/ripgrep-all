@@ -209,8 +209,14 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
+          EXE_DIR="";
           if [ -f "target/${{ matrix.target }}/release/rga.exe" ]; then
             ls -la "target/${{ matrix.target }}/release/rga.exe" || true;
+            EXE_DIR="target/${{ matrix.target }}/release";
+          fi
+          if [ -f "target/release/rga.exe" ]; then
+            ls -la "target/release/rga.exe" || true;
+            EXE_DIR="target/release";
           fi
           #staging="ripgrep_all-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           staging="${{ env.TAG_VERSION }}${{ env.TAG_BUILD }}-${{ env.WIN_VER }}"
@@ -219,16 +225,20 @@ jobs:
           cp {README.md,LICENSE.md} "$staging/"
           cp CHANGELOG.md "$staging/doc/"
 
-          if [ "${{ matrix.os }}" = "windows-2019" ]; then
-            cp "target/${{ matrix.target }}/release/rga.exe" "$staging/"
-            cp "target/${{ matrix.target }}/release/rga-preproc.exe" "$staging/"
-            cp "target/${{ matrix.target }}/release/rga-fzf.exe" "$staging/"
-            7z a "$staging.zip" "$staging"
-            certutil -hashfile "$staging.zip" SHA256 > "$staging.zip.sha256"
-            echo "ASSET=$staging.zip" >> $GITHUB_ENV
-            echo "ASSET_SUM=$staging.zip.sha256" >> $GITHUB_ENV
+          if [ -f "$EXE_DIR/rga.exe" ]; then
+            cp "$EXE_DIR/rga.exe" "$staging/"
           fi
-          ls -la "target/${{ matrix.target }}/release/rga.exe" || true;
+          if [ -f "$EXE_DIR/rga-preproc.exe" ]; then
+            cp "$EXE_DIR/rga-preproc.exe" "$staging/"
+          fi
+          if [ -f "$EXE_DIR/rga-fzf.exe" ]; then
+            cp "$EXE_DIR/rga-fzf.exe" "$staging/"
+          fi
+          7z a "$staging.zip" "$staging"
+          certutil -hashfile "$staging.zip" SHA256 > "$staging.zip.sha256"
+          echo "ASSET=$staging.zip" >> $GITHUB_ENV
+          echo "ASSET_SUM=$staging.zip.sha256" >> $GITHUB_ENV
+          ls -la $staging.zip
 
       - name: Publish version build - Release
         continue-on-error: true
