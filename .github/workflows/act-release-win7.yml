@@ -100,7 +100,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [linux, linux-arm, macos, win-msvc]
+        build: [linux, linux-arm, macos, win-msvc, win-msvc-7]
         include:
         #  - { build: linux      , os: ubuntu-22.04, rust: nightly           , target: x86_64-unknown-linux-musl   }
         #  - { build: linux-arm  , os: ubuntu-22.04, rust: nightly           , target: arm-unknown-linux-gnueabihf }
