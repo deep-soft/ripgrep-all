@@ -12,6 +12,7 @@ name = "ripgrep_all"
 readme = "README.md"
 repository = "https://github.com/phiresky/ripgrep-all"
 version = "0.10.6"
+rust-version = "1.77.2"
 
 [features]
 default = ["perf-literal"]
