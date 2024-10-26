@@ -1,3 +1,6 @@
+[build]
+build-stage = 1
+target = [ "x86_64-win7-windows-msvc" ]
 
 [package]
 authors = ["phiresky <phireskyde+git@gmail.com>"]
@@ -12,7 +15,6 @@ name = "ripgrep_all"
 readme = "README.md"
 repository = "https://github.com/phiresky/ripgrep-all"
 version = "0.10.6"
-rust-version = "1.77.2"
 
 [features]
 default = ["perf-literal"]
