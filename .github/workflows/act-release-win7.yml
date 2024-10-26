@@ -208,7 +208,9 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          ls -la "target/${{ matrix.target }}/release/rga.exe"
+          if [ -f "target/${{ matrix.target }}/release/rga.exe" ]; then
+            ls -la "target/${{ matrix.target }}/release/rga.exe" || true;
+          fi
           staging="ripgrep_all-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"/doc
 
@@ -224,6 +226,7 @@ jobs:
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
             echo "ASSET_SUM=$staging.zip.sha256" >> $GITHUB_ENV
           fi
+          ls -la "target/${{ matrix.target }}/release/rga.exe" || true;
 
       - name: Publish version build - Release
         continue-on-error: true
