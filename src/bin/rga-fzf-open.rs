@@ -13,6 +13,7 @@ fn main() -> anyhow::Result<()> {
 
     if fname.ends_with(".pdf") {
         use std::io::ErrorKind::*;
+
         let worked = Command::new("evince")
             .arg("--find")
             .arg(&query)
@@ -29,7 +30,5 @@ fn main() -> anyhow::Result<()> {
             return Ok(());
         }
     }
-    Command::new("xdg-open").arg(fname).spawn()?;
-
-    Ok(())
+    Ok(open::that_detached(&fname)?)
 }

@@ -44,6 +44,7 @@ log = "0.4.17"
 mailparse = "0.14.0"
 memchr = "2.5.0"
 mime2ext = "0.1.52"
+open = "5"
 paste = "1.0.12"
 path-clean = "1.0.1"
 pretty-bytes = "0.2.2"
@@ -58,7 +59,7 @@ tempfile = "3.5.0"
 tokio = {version = "1.28.1", features = ["full"]}
 tokio-rusqlite = "0.5.0"
 tokio-stream = {version = "0.1.14", features = ["io-util", "tokio-util"]}
-tokio-tar = { git = "https://github.com/vorot93/tokio-tar", version = "0.3.0" }
+astral-tokio-tar =  "0.5.1" 
 tokio-util = {version = "0.7.8", features = ["io", "full"]}
 tree_magic = {package = "tree_magic_mini", version = "3.0.3"}
 
